@@ -2,9 +2,56 @@
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Any, List
 from ..models.mapping_config import MappingConfiguration
+
+
+def _get_resource_path(relative_path: str) -> Path:
+    """Get the absolute path to a resource file.
+    
+    Works for both development and PyInstaller bundle environments.
+    Priority order:
+    1. Directory where executable is located (allows user override)
+    2. Current working directory
+    3. Bundle directory (PyInstaller only, read-only)
+    4. Relative path (fallback)
+    """
+    # PyInstaller creates a temp folder and stores path in _MEIPASS
+    if hasattr(sys, '_MEIPASS'):
+        # Running as a PyInstaller bundle
+        # First, try the directory where the executable is located
+        # This allows users to override config files by placing them next to the exe
+        if hasattr(sys, 'executable') and sys.executable:
+            exe_dir = Path(sys.executable).parent
+            exe_path = exe_dir / relative_path
+            if exe_path.exists():
+                return exe_path
+            # Return exe_dir path even if it doesn't exist yet (for writing)
+            # This ensures config files are saved next to the executable
+            return exe_path
+        
+        # If not found next to exe, try bundle directory (read-only)
+        bundle_path = Path(sys._MEIPASS) / relative_path
+        if bundle_path.exists():
+            return bundle_path
+    
+    # Running as a normal Python script
+    # Try current working directory first
+    cwd_path = Path.cwd() / relative_path
+    if cwd_path.exists():
+        return cwd_path
+    
+    # Try the directory where the script is located
+    if hasattr(sys, 'executable') and sys.executable:
+        script_dir = Path(sys.executable).parent
+        script_path = script_dir / relative_path
+        if script_path.exists():
+            return script_path
+    
+    # Fall back to relative path from current working directory
+    return Path(relative_path)
 
 
 class ConfigManager:
@@ -13,8 +60,8 @@ class ConfigManager:
     def __init__(self, config_path: str = "config/config.json", 
                  mapping_path: str = "config/mapping.json"):
         """Initialize config manager."""
-        self.config_path = Path(config_path)
-        self.mapping_path = Path(mapping_path)
+        self.config_path = _get_resource_path(config_path)
+        self.mapping_path = _get_resource_path(mapping_path)
         self._config: Dict[str, Any] = {}
         self._mappings: List[MappingConfiguration] = []
     

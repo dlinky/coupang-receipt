@@ -44,6 +44,16 @@ class MappingWorker(QThread):
             total_weeks = len(self.context.selected_weeks)
             total_tasks = total_weeks * len(weekly_mappings) + len(monthly_mappings)
             
+            # Check if there are any mappings to process
+            if total_tasks == 0:
+                self.completed.emit(False, "매핑 설정이 없습니다. 매핑 설정 파일을 확인해주세요.")
+                return
+            
+            # Check if weeks are selected
+            if total_weeks == 0:
+                self.completed.emit(False, "주차가 선택되지 않았습니다.")
+                return
+            
             completed_tasks = 0
             
             excel_processor = ExcelProcessor()
@@ -53,8 +63,9 @@ class MappingWorker(QThread):
             
             for week in self.context.selected_weeks:
                 self.context.current_week = week
+                progress = completed_tasks / total_tasks if total_tasks > 0 else 0.0
                 self.progress_updated.emit(
-                    completed_tasks / total_tasks,
+                    progress,
                     f"Processing week {week}..."
                 )
                 
@@ -72,8 +83,9 @@ class MappingWorker(QThread):
                         return
                     
                     completed_tasks += 1
+                    progress = completed_tasks / total_tasks if total_tasks > 0 else 1.0
                     self.progress_updated.emit(
-                        completed_tasks / total_tasks,
+                        progress,
                         f"Completed: {mapping.data_name} (Week {week})"
                     )
             
@@ -91,8 +103,9 @@ class MappingWorker(QThread):
                     return
                 
                 completed_tasks += 1
+                progress = completed_tasks / total_tasks if total_tasks > 0 else 1.0
                 self.progress_updated.emit(
-                    completed_tasks / total_tasks,
+                    progress,
                     f"Completed: {mapping.data_name}"
                 )
             
@@ -183,7 +196,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(week_layout)
         
         # Execute button
-        execute_btn = QPushButton("데이터 매핑 실행")
+        execute_btn = QPushButton("작업 시작")
         execute_btn.clicked.connect(self.execute_mapping)
         layout.addWidget(execute_btn)
         
