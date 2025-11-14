@@ -1,0 +1,13 @@
+{
+  "default_password": "4880403942",
+  "week_offsets": {
+    "1": 0,
+    "2": 36,
+    "3": 72,
+    "4": 108,
+    "5": 144
+  },
+  "mapping_file_path": "config/mapping.json",
+  "config_file_path": "config/config.json"
+}
+

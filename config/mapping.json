@@ -1,0 +1,169 @@
+[
+  {
+    "data_name": "라이더 목록",
+    "branch_sheet": "주간정산",
+    "branch_range": "C6:C35",
+    "head_office_sheet": "종합",
+    "head_office_range": "C17:C46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "배달료",
+    "branch_sheet": "주간정산",
+    "branch_range": "E6:E35",
+    "head_office_sheet": "종합",
+    "head_office_range": "AC17:AC46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "고용보험",
+    "branch_sheet": "주간정산",
+    "branch_range": "T6:T35",
+    "head_office_sheet": "종합",
+    "head_office_range": "AE17:AE46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "산재보험",
+    "branch_sheet": "주간정산",
+    "branch_range": "U6:U35",
+    "head_office_sheet": "종합",
+    "head_office_range": "AG17:AG46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "시간제보험",
+    "branch_sheet": "주간정산",
+    "branch_range": "X6:X35",
+    "head_office_sheet": "종합",
+    "head_office_range": "AH17:AH46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "보험료 소급",
+    "branch_sheet": "주간정산",
+    "branch_range": "Y6:Y35",
+    "head_office_sheet": "종합",
+    "head_office_range": "AI17:AI46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "공급가",
+    "branch_sheet": "주간정산",
+    "branch_range": "AJ4",
+    "head_office_sheet": "종합",
+    "head_office_range": "B10",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "부가세",
+    "branch_sheet": "주간정산",
+    "branch_range": "AJ5",
+    "head_office_sheet": "종합",
+    "head_office_range": "C10",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "관리비",
+    "branch_sheet": "주간정산",
+    "branch_range": "AJ21",
+    "head_office_sheet": "종합",
+    "head_office_range": "B6",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "관리비 프로모션",
+    "branch_sheet": "주간정산",
+    "branch_range": "AJ22",
+    "head_office_sheet": "종합",
+    "head_office_range": "C6",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "프로모션",
+    "branch_sheet": "주간정산",
+    "branch_range": "H6:H35",
+    "head_office_sheet": "협력사 자체 미션",
+    "head_office_range": "",
+    "calculation_method": "conditional_copy",
+    "condition": {
+      "source_sheet": "협력사 자체 미션",
+      "name_column": "G",
+      "value_column": "F",
+      "check_column": "J",
+      "check_value": "달성"
+    }
+  },
+  {
+    "data_name": "기사별 정산 내역 타이틀",
+    "branch_sheet": "주간정산",
+    "branch_range": "B2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "title"
+  },
+  {
+    "data_name": "익일정산 신청 내역 타이틀",
+    "branch_sheet": "주간정산",
+    "branch_range": "AB2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "title"
+  },
+  {
+    "data_name": "지점 정산서 타이틀",
+    "branch_sheet": "주간정산",
+    "branch_range": "AI2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "title"
+  },
+  {
+    "data_name": "기사별 정산서 타이틀",
+    "branch_sheet": "주간정산",
+    "branch_range": "AL2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "date_range"
+  },
+  {
+    "data_name": "지급일자",
+    "branch_sheet": "주간정산",
+    "branch_range": "AM6",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "payment_date"
+  },
+  {
+    "data_name": "기사별 정산 내역 타이틀",
+    "branch_sheet": "월간정산",
+    "branch_range": "B2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "title"
+  },
+  {
+    "data_name": "지점 정산서 타이틀",
+    "branch_sheet": "월간정산",
+    "branch_range": "AB2",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "date_calculation",
+    "date_type": "title"
+  },
+  {
+    "data_name": "월간정산 라이더 목록",
+    "branch_sheet": "월간정산",
+    "branch_range": "C6:C35",
+    "head_office_sheet": "",
+    "head_office_range": "",
+    "calculation_method": "unique_extraction"
+  }
+]
+

@@ -31,7 +31,25 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### Code Quality
+- [ ] 코드가 간결하고 읽기 쉬운가?
+- [ ] 주석이 최소화되고 코드가 자체 설명적인가?
+- [ ] 변수명과 함수명이 의미를 명확히 전달하는가?
+
+### Testing
+- [ ] 핵심 로직에 대한 테스트 계획이 수립되었는가?
+- [ ] 70% 코드 커버리지 목표를 달성할 수 있는가?
+- [ ] 테스트 전략(단위/통합/계약)이 정의되었는가?
+
+### User Experience
+- [ ] 인터페이스가 직관적인가?
+- [ ] 1초 이내 응답 목표를 달성할 수 있는 설계인가?
+- [ ] 사용자 작업 흐름이 최적화되었는가?
+
+### Performance
+- [ ] 새로운 의존성 추가가 필요한가? (필요 시 정당화 필요)
+- [ ] 기존 라이브러리나 표준 라이브러리로 구현 가능한가?
+- [ ] 의존성 추가의 비용-편익 분석이 완료되었는가?
 
 ## Project Structure
 
