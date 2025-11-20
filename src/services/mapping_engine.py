@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 from openpyxl import Workbook
-from openpyxl.utils import column_index_from_string
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 from ..models.mapping_config import MappingConfiguration
 from ..models.file_info import FileInformation
@@ -93,6 +93,10 @@ class MappingEngine:
             elif mapping_config.calculation_method == "unique_extraction":
                 result = self._execute_unique_extraction(
                     mapping_config, branch_workbook
+                )
+            elif mapping_config.calculation_method == "simple_sum":
+                result = self._execute_simple_sum(
+                    mapping_config, head_workbook, branch_workbook, week_offset
                 )
             else:
                 return MappingResult(
@@ -200,6 +204,104 @@ class MappingEngine:
                 success=False,
                 rows_processed=0,
                 error_message=f"Simple copy failed: {e}"
+            )
+    
+    def _execute_simple_sum(
+        self,
+        mapping_config: MappingConfiguration,
+        head_workbook: Workbook,
+        branch_workbook: Workbook,
+        week_offset: int
+    ) -> MappingResult:
+        """Execute simple sum operation - sum values from multiple columns.
+        
+        Args:
+            mapping_config: Mapping configuration with head_office_range containing
+                          comma-separated ranges (e.g., "G17:I46" or "K17:K46, M17:M46")
+            head_workbook: Head office workbook
+            branch_workbook: Branch workbook
+            week_offset: Week offset for branch file
+        
+        Returns:
+            MappingResult with success status and rows processed
+        """
+        try:
+            head_sheet = self.excel_processor.get_sheet(
+                head_workbook, mapping_config.head_office_sheet
+            )
+            branch_sheet = self.excel_processor.get_sheet(
+                branch_workbook, mapping_config.branch_sheet
+            )
+            
+            # Parse multiple ranges from head_office_range
+            source_ranges = CellUtils.parse_multiple_ranges(mapping_config.head_office_range)
+            
+            # Parse target range and apply offset
+            target_range = CellUtils.apply_row_offset(
+                mapping_config.branch_range, week_offset
+            )
+            target_start_col, target_start_row, target_end_col, target_end_row = CellUtils.parse_range(target_range)
+            
+            # Determine number of rows from first source range
+            first_range = source_ranges[0]
+            first_start_col, first_start_row, first_end_col, first_end_row = CellUtils.parse_range(first_range)
+            num_rows = first_end_row - first_start_row + 1
+            
+            # Validate that all ranges have the same number of rows
+            for range_str in source_ranges[1:]:
+                start_col, start_row, end_col, end_row = CellUtils.parse_range(range_str)
+                if (end_row - start_row + 1) != num_rows:
+                    return MappingResult(
+                        success=False,
+                        rows_processed=0,
+                        error_message=f"All ranges must have the same number of rows. "
+                                     f"First range has {num_rows} rows, but {range_str} has {end_row - start_row + 1} rows"
+                    )
+            
+            # Read values from each range and sum row by row
+            summed_values = []
+            for row_idx in range(num_rows):
+                row_sum = 0
+                current_row = first_start_row + row_idx
+                
+                # Sum values from all ranges for this row
+                for range_str in source_ranges:
+                    start_col, start_row, end_col, end_row = CellUtils.parse_range(range_str)
+                    # Read all columns in this range for current row
+                    start_col_idx = column_index_from_string(start_col)
+                    end_col_idx = column_index_from_string(end_col)
+                    
+                    for col_idx in range(start_col_idx, end_col_idx + 1):
+                        col_letter = get_column_letter(col_idx)
+                        cell_address = f"{col_letter}{current_row}"
+                        
+                        # Handle merged cells
+                        merged_cell = self.excel_processor.get_merged_cell_top_left(head_sheet, cell_address)
+                        if merged_cell:
+                            cell_address = merged_cell
+                        
+                        cell = head_sheet[cell_address]
+                        cell_value = cell.value
+                        
+                        # Sum numeric values, ignore None and non-numeric
+                        if isinstance(cell_value, (int, float)):
+                            row_sum += cell_value
+                
+                summed_values.append(row_sum)
+            
+            # Write summed values to branch file
+            if not summed_values:
+                return MappingResult(success=True, rows_processed=0)
+            
+            self.excel_processor.write_cell_range(branch_sheet, target_range, summed_values)
+            
+            return MappingResult(success=True, rows_processed=len(summed_values))
+            
+        except Exception as e:
+            return MappingResult(
+                success=False,
+                rows_processed=0,
+                error_message=f"Simple sum failed: {e}"
             )
     
     def _execute_conditional_copy(

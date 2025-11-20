@@ -99,6 +99,10 @@ pyinstaller build_exe.spec
 - `icon`: 아이콘 파일 경로 (선택사항)
 - `console`: 콘솔 창 표시 여부 (False = GUI만 표시)
 
+## 개발 회고 및 학습
+
+프로젝트 개발 과정에서 배운 점과 개선 사항은 [`docs/DEVELOPMENT_REVIEW.md`](docs/DEVELOPMENT_REVIEW.md)를 참조하세요.
+
 ## 라이선스
 
 이 프로젝트는 내부 사용을 위한 것입니다.

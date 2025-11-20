@@ -177,6 +177,19 @@
 
 ---
 
+## Phase 10: Simple Sum Calculation Method
+
+**Purpose**: Add simple_sum calculation method to sum values from multiple columns (adjacent or non-adjacent)
+
+- [x] T063 [P] Add parse_multiple_ranges utility function in src/utils/cell_utils.py (parse comma-separated cell ranges like "K17:K46, M17:M46")
+- [x] T064 Implement _execute_simple_sum method in src/services/mapping_engine.py (read from multiple ranges, sum row by row, write to branch file)
+- [x] T065 Add simple_sum case handling in execute_mapping method in src/services/mapping_engine.py
+- [x] T066 [P] Add unit tests for parse_multiple_ranges in tests/utils/test_cell_utils.py
+- [x] T067 [P] Add unit tests for _execute_simple_sum in tests/services/test_mapping_engine.py (test adjacent columns, non-adjacent columns, empty values, None handling)
+- [x] T068 Update mapping engine contract documentation in specs/1-settlement-automation/contracts/mapping-engine.md (add simple_sum method description)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

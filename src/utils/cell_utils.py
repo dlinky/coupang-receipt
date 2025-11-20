@@ -1,7 +1,7 @@
 """Cell utility functions."""
 
 import re
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 
 class CellUtils:
@@ -97,4 +97,38 @@ class CellUtils:
         """
         offset = week_offsets.get(str(week), 0)
         return cls.apply_row_offset(cell_range, offset)
+    
+    @classmethod
+    def parse_multiple_ranges(cls, ranges_str: str) -> List[str]:
+        """Parse comma-separated cell ranges.
+        
+        Args:
+            ranges_str: Comma-separated cell ranges like "G17:I46" or "K17:K46, M17:M46, O17:O46"
+        
+        Returns:
+            List of individual cell range strings
+        
+        Raises:
+            ValueError: If any range format is invalid
+        
+        Examples:
+            >>> CellUtils.parse_multiple_ranges("G17:I46")
+            ['G17:I46']
+            >>> CellUtils.parse_multiple_ranges("K17:K46, M17:M46, O17:O46")
+            ['K17:K46', 'M17:M46', 'O17:O46']
+        """
+        if not ranges_str or not ranges_str.strip():
+            raise ValueError("Empty ranges string")
+        
+        # Split by comma and strip whitespace
+        ranges = [r.strip() for r in ranges_str.split(",")]
+        
+        # Validate each range
+        for range_str in ranges:
+            if not range_str:
+                raise ValueError(f"Empty range found in: {ranges_str}")
+            # Validate by trying to parse it
+            cls.parse_range(range_str)
+        
+        return ranges
 
