@@ -32,17 +32,25 @@
     "calculation_method": "simple_sum"
   },
   {
-    "data_name": "본사 프로모션",
+    "data_name": "차감",
     "branch_sheet": "주간정산",
     "branch_range": "G6:G35",
     "head_office_sheet": "종합",
-    "head_office_range": "S17:S46, U17:U46, W17:W46, Y17:Y46",
+    "head_office_range": "AB17:AB46",
+    "calculation_method": "simple_copy"
+  },
+  {
+    "data_name": "본사 프로모션",
+    "branch_sheet": "주간정산",
+    "branch_range": "H6:H35",
+    "head_office_sheet": "종합",
+    "head_office_range": "S17:S46, U17:U46, W17:W46, Y17:Y46, AA17:AA46",
     "calculation_method": "simple_sum"
   },
   {
     "data_name": "고용보험",
     "branch_sheet": "주간정산",
-    "branch_range": "T6:T35",
+    "branch_range": "U6:U35",
     "head_office_sheet": "종합",
     "head_office_range": "AE17:AE46",
     "calculation_method": "simple_copy"
@@ -50,7 +58,7 @@
   {
     "data_name": "산재보험",
     "branch_sheet": "주간정산",
-    "branch_range": "U6:U35",
+    "branch_range": "V6:V35",
     "head_office_sheet": "종합",
     "head_office_range": "AG17:AG46",
     "calculation_method": "simple_copy"
@@ -58,7 +66,7 @@
   {
     "data_name": "시간제보험",
     "branch_sheet": "주간정산",
-    "branch_range": "X6:X35",
+    "branch_range": "Y6:Y35",
     "head_office_sheet": "종합",
     "head_office_range": "AH17:AH46",
     "calculation_method": "simple_copy"
@@ -66,7 +74,7 @@
   {
     "data_name": "보험료 소급",
     "branch_sheet": "주간정산",
-    "branch_range": "Y6:Y35",
+    "branch_range": "Z6:Z35",
     "head_office_sheet": "종합",
     "head_office_range": "AI17:AI46",
     "calculation_method": "simple_copy"
@@ -74,7 +82,7 @@
   {
     "data_name": "공급가",
     "branch_sheet": "주간정산",
-    "branch_range": "AJ4",
+    "branch_range": "AK4",
     "head_office_sheet": "종합",
     "head_office_range": "B10",
     "calculation_method": "simple_copy"
@@ -82,7 +90,7 @@
   {
     "data_name": "부가세",
     "branch_sheet": "주간정산",
-    "branch_range": "AJ5",
+    "branch_range": "AK5",
     "head_office_sheet": "종합",
     "head_office_range": "C10",
     "calculation_method": "simple_copy"
@@ -90,7 +98,7 @@
   {
     "data_name": "관리비",
     "branch_sheet": "주간정산",
-    "branch_range": "AJ21",
+    "branch_range": "AK21",
     "head_office_sheet": "종합",
     "head_office_range": "B6",
     "calculation_method": "simple_copy"
@@ -98,7 +106,7 @@
   {
     "data_name": "관리비 프로모션",
     "branch_sheet": "주간정산",
-    "branch_range": "AJ22",
+    "branch_range": "AK22",
     "head_office_sheet": "종합",
     "head_office_range": "C6",
     "calculation_method": "simple_copy"
@@ -106,10 +114,10 @@
   {
     "data_name": "프로모션",
     "branch_sheet": "주간정산",
-    "branch_range": "H6:H35",
+    "branch_range": "I6:I35",
     "head_office_sheet": "협력사 자체 미션",
     "head_office_range": "",
-    "calculation_method": "conditional_copy",
+    "calculation_method": "conditional_sum",
     "condition": {
       "source_sheet": "협력사 자체 미션",
       "name_column": "G",
@@ -130,7 +138,7 @@
   {
     "data_name": "익일정산 신청 내역 타이틀",
     "branch_sheet": "주간정산",
-    "branch_range": "AB2",
+    "branch_range": "AC2",
     "head_office_sheet": "",
     "head_office_range": "",
     "calculation_method": "date_calculation",
@@ -139,7 +147,7 @@
   {
     "data_name": "지점 정산서 타이틀",
     "branch_sheet": "주간정산",
-    "branch_range": "AI2",
+    "branch_range": "AJ2",
     "head_office_sheet": "",
     "head_office_range": "",
     "calculation_method": "date_calculation",
@@ -148,7 +156,7 @@
   {
     "data_name": "기사별 정산서 타이틀",
     "branch_sheet": "주간정산",
-    "branch_range": "AL2",
+    "branch_range": "AM2",
     "head_office_sheet": "",
     "head_office_range": "",
     "calculation_method": "date_calculation",
@@ -157,7 +165,7 @@
   {
     "data_name": "지급일자",
     "branch_sheet": "주간정산",
-    "branch_range": "AM6",
+    "branch_range": "AN6",
     "head_office_sheet": "",
     "head_office_range": "",
     "calculation_method": "date_calculation",
@@ -175,7 +183,7 @@
   {
     "data_name": "지점 정산서 타이틀",
     "branch_sheet": "월간정산",
-    "branch_range": "AB2",
+    "branch_range": "AC2",
     "head_office_sheet": "",
     "head_office_range": "",
     "calculation_method": "date_calculation",
@@ -190,4 +198,3 @@
     "calculation_method": "unique_extraction"
   }
 ]
-

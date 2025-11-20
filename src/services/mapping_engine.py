@@ -98,6 +98,10 @@ class MappingEngine:
                 result = self._execute_simple_sum(
                     mapping_config, head_workbook, branch_workbook, week_offset
                 )
+            elif mapping_config.calculation_method == "conditional_sum":
+                result = self._execute_conditional_sum(
+                    mapping_config, head_workbook, branch_workbook, week_offset
+                )
             else:
                 return MappingResult(
                     success=False,
@@ -258,9 +262,21 @@ class MappingEngine:
                                      f"First range has {num_rows} rows, but {range_str} has {end_row - start_row + 1} rows"
                     )
             
+            # Read rider names from branch file (C column) to check if we should write values
+            rider_column = "C"
+            rider_range = f"{rider_column}{target_start_row}:{rider_column}{target_end_row}"
+            rider_names = self.excel_processor.read_cell_range(branch_sheet, rider_range)
+            
             # Read values from each range and sum row by row
             summed_values = []
             for row_idx in range(num_rows):
+                # Check if rider name exists for this row
+                rider_name = rider_names[row_idx] if row_idx < len(rider_names) else None
+                if not rider_name or not str(rider_name).strip():
+                    # No rider name, skip this row (set to None)
+                    summed_values.append(None)
+                    continue
+                
                 row_sum = 0
                 current_row = first_start_row + row_idx
                 
@@ -295,7 +311,8 @@ class MappingEngine:
             
             self.excel_processor.write_cell_range(branch_sheet, target_range, summed_values)
             
-            return MappingResult(success=True, rows_processed=len(summed_values))
+            processed = len([v for v in summed_values if v is not None])
+            return MappingResult(success=True, rows_processed=processed)
             
         except Exception as e:
             return MappingResult(
@@ -370,6 +387,96 @@ class MappingEngine:
                 success=False,
                 rows_processed=0,
                 error_message=f"Conditional copy failed: {e}"
+            )
+    
+    def _execute_conditional_sum(
+        self,
+        mapping_config: MappingConfiguration,
+        head_workbook: Workbook,
+        branch_workbook: Workbook,
+        week_offset: int
+    ) -> MappingResult:
+        """Execute conditional sum operation - sum value_column values for rows matching condition.
+        
+        Similar to conditional_copy, but sums all matching values instead of taking the first one.
+        
+        Args:
+            mapping_config: Mapping configuration with condition
+            head_workbook: Head office workbook
+            branch_workbook: Branch workbook
+            week_offset: Week offset for branch file
+        
+        Returns:
+            MappingResult with success status and rows processed
+        """
+        try:
+            if not mapping_config.condition:
+                return MappingResult(
+                    success=False,
+                    rows_processed=0,
+                    error_message="Condition is required for conditional sum"
+                )
+            
+            condition = mapping_config.condition
+            head_sheet = self.excel_processor.get_sheet(
+                head_workbook, condition.source_sheet
+            )
+            branch_sheet = self.excel_processor.get_sheet(
+                branch_workbook, mapping_config.branch_sheet
+            )
+            
+            target_range = CellUtils.apply_row_offset(
+                mapping_config.branch_range, week_offset
+            )
+            start_col, start_row, end_col, end_row = CellUtils.parse_range(target_range)
+            
+            rider_column = "C"
+            rider_range = f"{rider_column}{start_row}:{rider_column}{end_row}"
+            rider_names = self.excel_processor.read_cell_range(branch_sheet, rider_range)
+            
+            name_col_idx = column_index_from_string(condition.name_column)
+            value_col_idx = column_index_from_string(condition.value_column)
+            check_col_idx = column_index_from_string(condition.check_column)
+            
+            # Sum values for each rider (multiple rows can match)
+            promotion_sums = {}
+            
+            for row in range(9, head_sheet.max_row + 1):
+                name_cell = head_sheet.cell(row, name_col_idx)
+                value_cell = head_sheet.cell(row, value_col_idx)
+                check_cell = head_sheet.cell(row, check_col_idx)
+                
+                if name_cell.value and check_cell.value == condition.check_value:
+                    rider_name = str(name_cell.value).strip()
+                    value = value_cell.value
+                    
+                    # Sum numeric values, ignore None and non-numeric
+                    if isinstance(value, (int, float)):
+                        if rider_name not in promotion_sums:
+                            promotion_sums[rider_name] = 0
+                        promotion_sums[rider_name] += value
+            
+            result_values = []
+            for rider_name in rider_names:
+                if rider_name and str(rider_name).strip():
+                    rider_name_str = str(rider_name).strip()
+                    if rider_name_str in promotion_sums:
+                        result_values.append(promotion_sums[rider_name_str])
+                    else:
+                        result_values.append(None)  # No matching rows, don't write
+                else:
+                    result_values.append(None)  # Empty rider name, don't write
+            
+            self.excel_processor.write_cell_range(branch_sheet, target_range, result_values)
+            
+            processed = len([v for v in result_values if v is not None])
+            return MappingResult(success=True, rows_processed=processed)
+            
+        except Exception as e:
+            return MappingResult(
+                success=False,
+                rows_processed=0,
+                error_message=f"Conditional sum failed: {e}"
             )
     
     def _execute_date_calculation(

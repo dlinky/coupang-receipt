@@ -203,3 +203,275 @@ def test_execute_simple_sum_mismatched_row_count():
     assert result.success is False
     assert "same number of rows" in result.error_message.lower()
 
+
+def test_execute_conditional_sum_single_match():
+    """Test conditional_sum with single matching row per rider."""
+    # Create test workbooks
+    head_workbook = Workbook()
+    head_sheet = head_workbook.active
+    head_sheet.title = "협력사 자체 미션"
+    
+    # Fill test data: row 9
+    head_sheet["G9"] = "라이더1"  # name_column
+    head_sheet["F9"] = 100  # value_column
+    head_sheet["J9"] = "달성"  # check_column, check_value
+    
+    # row 10
+    head_sheet["G10"] = "라이더2"
+    head_sheet["F10"] = 200
+    head_sheet["J10"] = "달성"
+    
+    branch_workbook = Workbook()
+    branch_sheet = branch_workbook.create_sheet("주간정산")
+    branch_sheet["C6"] = "라이더1"
+    branch_sheet["C7"] = "라이더2"
+    branch_sheet["C8"] = "라이더3"  # No match
+    
+    # Create mapping config
+    from src.models.mapping_config import MappingConfiguration, Condition
+    condition = Condition(
+        source_sheet="협력사 자체 미션",
+        name_column="G",
+        value_column="F",
+        check_column="J",
+        check_value="달성"
+    )
+    mapping_config = MappingConfiguration(
+        data_name="지점 프로모션 합계",
+        branch_sheet="주간정산",
+        branch_range="H6:H8",
+        head_office_sheet="협력사 자체 미션",
+        head_office_range="",
+        calculation_method="conditional_sum",
+        condition=condition
+    )
+    
+    # Execute mapping
+    engine = MappingEngine()
+    result = engine._execute_conditional_sum(
+        mapping_config, head_workbook, branch_workbook, week_offset=0
+    )
+    
+    # Verify result
+    assert result.success is True
+    assert result.rows_processed == 2
+    assert branch_sheet["H6"].value == 100  # 라이더1
+    assert branch_sheet["H7"].value == 200  # 라이더2
+    assert branch_sheet["H8"].value == 0  # 라이더3 (no match)
+
+
+def test_execute_conditional_sum_multiple_matches():
+    """Test conditional_sum with multiple matching rows for same rider."""
+    # Create test workbooks
+    head_workbook = Workbook()
+    head_sheet = head_workbook.active
+    head_sheet.title = "협력사 자체 미션"
+    
+    # Fill test data: 라이더1이 여러 행에 있음
+    head_sheet["G9"] = "라이더1"
+    head_sheet["F9"] = 100
+    head_sheet["J9"] = "달성"
+    
+    head_sheet["G10"] = "라이더1"  # Same rider
+    head_sheet["F10"] = 150
+    head_sheet["J10"] = "달성"
+    
+    head_sheet["G11"] = "라이더1"  # Same rider again
+    head_sheet["F11"] = 50
+    head_sheet["J11"] = "달성"
+    
+    head_sheet["G12"] = "라이더2"
+    head_sheet["F12"] = 200
+    head_sheet["J12"] = "달성"
+    
+    branch_workbook = Workbook()
+    branch_sheet = branch_workbook.create_sheet("주간정산")
+    branch_sheet["C6"] = "라이더1"
+    branch_sheet["C7"] = "라이더2"
+    
+    # Create mapping config
+    from src.models.mapping_config import MappingConfiguration, Condition
+    condition = Condition(
+        source_sheet="협력사 자체 미션",
+        name_column="G",
+        value_column="F",
+        check_column="J",
+        check_value="달성"
+    )
+    mapping_config = MappingConfiguration(
+        data_name="지점 프로모션 합계",
+        branch_sheet="주간정산",
+        branch_range="H6:H7",
+        head_office_sheet="협력사 자체 미션",
+        head_office_range="",
+        calculation_method="conditional_sum",
+        condition=condition
+    )
+    
+    # Execute mapping
+    engine = MappingEngine()
+    result = engine._execute_conditional_sum(
+        mapping_config, head_workbook, branch_workbook, week_offset=0
+    )
+    
+    # Verify result (라이더1의 값들이 합산됨)
+    assert result.success is True
+    assert result.rows_processed == 2
+    assert branch_sheet["H6"].value == 300  # 100 + 150 + 50
+    assert branch_sheet["H7"].value == 200  # 라이더2
+
+
+def test_execute_conditional_sum_with_non_matching_condition():
+    """Test conditional_sum with rows that don't match condition."""
+    # Create test workbooks
+    head_workbook = Workbook()
+    head_sheet = head_workbook.active
+    head_sheet.title = "협력사 자체 미션"
+    
+    # Fill test data: check_value가 "달성"이 아닌 경우
+    head_sheet["G9"] = "라이더1"
+    head_sheet["F9"] = 100
+    head_sheet["J9"] = "미달성"  # Not matching
+    
+    head_sheet["G10"] = "라이더1"
+    head_sheet["F10"] = 200
+    head_sheet["J10"] = "달성"  # Matching
+    
+    branch_workbook = Workbook()
+    branch_sheet = branch_workbook.create_sheet("주간정산")
+    branch_sheet["C6"] = "라이더1"
+    
+    # Create mapping config
+    from src.models.mapping_config import MappingConfiguration, Condition
+    condition = Condition(
+        source_sheet="협력사 자체 미션",
+        name_column="G",
+        value_column="F",
+        check_column="J",
+        check_value="달성"
+    )
+    mapping_config = MappingConfiguration(
+        data_name="지점 프로모션 합계",
+        branch_sheet="주간정산",
+        branch_range="H6:H6",
+        head_office_sheet="협력사 자체 미션",
+        head_office_range="",
+        calculation_method="conditional_sum",
+        condition=condition
+    )
+    
+    # Execute mapping
+    engine = MappingEngine()
+    result = engine._execute_conditional_sum(
+        mapping_config, head_workbook, branch_workbook, week_offset=0
+    )
+    
+    # Verify result (only matching row is summed)
+    assert result.success is True
+    assert result.rows_processed == 1
+    assert branch_sheet["H6"].value == 200  # Only F10 (200) is summed, F9 (100) is ignored
+
+
+def test_execute_conditional_sum_with_non_numeric_values():
+    """Test conditional_sum with non-numeric values (should be ignored)."""
+    # Create test workbooks
+    head_workbook = Workbook()
+    head_sheet = head_workbook.active
+    head_sheet.title = "협력사 자체 미션"
+    
+    # Fill test data with None and non-numeric values
+    head_sheet["G9"] = "라이더1"
+    head_sheet["F9"] = 100
+    head_sheet["J9"] = "달성"
+    
+    head_sheet["G10"] = "라이더1"
+    head_sheet["F10"] = None  # Should be ignored
+    head_sheet["J10"] = "달성"
+    
+    head_sheet["G11"] = "라이더1"
+    head_sheet["F11"] = "문자열"  # Should be ignored
+    head_sheet["J11"] = "달성"
+    
+    head_sheet["G12"] = "라이더1"
+    head_sheet["F12"] = 50
+    head_sheet["J12"] = "달성"
+    
+    branch_workbook = Workbook()
+    branch_sheet = branch_workbook.create_sheet("주간정산")
+    branch_sheet["C6"] = "라이더1"
+    
+    # Create mapping config
+    from src.models.mapping_config import MappingConfiguration, Condition
+    condition = Condition(
+        source_sheet="협력사 자체 미션",
+        name_column="G",
+        value_column="F",
+        check_column="J",
+        check_value="달성"
+    )
+    mapping_config = MappingConfiguration(
+        data_name="지점 프로모션 합계",
+        branch_sheet="주간정산",
+        branch_range="H6:H6",
+        head_office_sheet="협력사 자체 미션",
+        head_office_range="",
+        calculation_method="conditional_sum",
+        condition=condition
+    )
+    
+    # Execute mapping
+    engine = MappingEngine()
+    result = engine._execute_conditional_sum(
+        mapping_config, head_workbook, branch_workbook, week_offset=0
+    )
+    
+    # Verify result (only numeric values are summed)
+    assert result.success is True
+    assert result.rows_processed == 1
+    assert branch_sheet["H6"].value == 150  # 100 + 50 (None and string ignored)
+
+
+def test_execute_conditional_sum_with_week_offset():
+    """Test conditional_sum with week offset applied to branch file."""
+    # Create test workbooks
+    head_workbook = Workbook()
+    head_sheet = head_workbook.active
+    head_sheet.title = "협력사 자체 미션"
+    head_sheet["G9"] = "라이더1"
+    head_sheet["F9"] = 100
+    head_sheet["J9"] = "달성"
+    
+    branch_workbook = Workbook()
+    branch_sheet = branch_workbook.create_sheet("주간정산")
+    branch_sheet["C6"] = "라이더1"
+    
+    # Create mapping config
+    from src.models.mapping_config import MappingConfiguration, Condition
+    condition = Condition(
+        source_sheet="협력사 자체 미션",
+        name_column="G",
+        value_column="F",
+        check_column="J",
+        check_value="달성"
+    )
+    mapping_config = MappingConfiguration(
+        data_name="지점 프로모션 합계",
+        branch_sheet="주간정산",
+        branch_range="H6:H6",  # Will be offset to H42
+        head_office_sheet="협력사 자체 미션",
+        head_office_range="",
+        calculation_method="conditional_sum",
+        condition=condition
+    )
+    
+    # Execute mapping with offset (2주차 = +36)
+    engine = MappingEngine()
+    result = engine._execute_conditional_sum(
+        mapping_config, head_workbook, branch_workbook, week_offset=36
+    )
+    
+    # Verify result (offset applied to target range)
+    assert result.success is True
+    assert result.rows_processed == 1
+    assert branch_sheet["H42"].value == 100  # Written to H42 (H6+36)
+

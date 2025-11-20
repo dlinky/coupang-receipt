@@ -2,6 +2,7 @@
 
 import re
 from typing import Tuple, Optional, List
+from openpyxl.utils import get_column_letter, column_index_from_string
 
 
 class CellUtils:
@@ -131,4 +132,57 @@ class CellUtils:
             cls.parse_range(range_str)
         
         return ranges
+    
+    @classmethod
+    def increment_column(cls, column: str, offset: int = 1) -> str:
+        """Increment Excel column letter.
+        
+        Args:
+            column: Column letter like "A", "F", "Z", "AA"
+            offset: Number of columns to increment (default: 1)
+        
+        Returns:
+            Incremented column letter
+        
+        Examples:
+            >>> CellUtils.increment_column("F")
+            'G'
+            >>> CellUtils.increment_column("Z")
+            'AA'
+            >>> CellUtils.increment_column("AA")
+            'AB'
+        """
+        col_idx = column_index_from_string(column)
+        new_col_idx = col_idx + offset
+        return get_column_letter(new_col_idx)
+    
+    @classmethod
+    def increment_column_in_range(cls, cell_range: str, offset: int = 1) -> str:
+        """Increment column letters in cell range.
+        
+        Args:
+            cell_range: Cell range like "F6:F35" or "AJ4"
+            offset: Number of columns to increment (default: 1)
+        
+        Returns:
+            Updated cell range with incremented columns
+        
+        Examples:
+            >>> CellUtils.increment_column_in_range("F6:F35")
+            'G6:G35'
+            >>> CellUtils.increment_column_in_range("AJ4")
+            'AK4'
+        """
+        if offset == 0:
+            return cell_range
+        
+        start_col, start_row, end_col, end_row = cls.parse_range(cell_range)
+        
+        new_start_col = cls.increment_column(start_col, offset)
+        new_end_col = cls.increment_column(end_col, offset)
+        
+        if ":" in cell_range:
+            return f"{new_start_col}{start_row}:{new_end_col}{end_row}"
+        else:
+            return f"{new_start_col}{start_row}"
 

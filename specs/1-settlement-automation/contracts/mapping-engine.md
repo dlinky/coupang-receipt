@@ -124,6 +124,54 @@
 - 붙어있는 열: `head_office_range="G17:I46"` → G, H, I 열의 값을 행별로 합산
 - 떨어져 있는 열: `head_office_range="K17:K46, M17:M46, O17:O46"` → K, M, O 열의 값을 행별로 합산
 
+### 6. `conditional_sum`
+
+조건부 합산: 조건을 만족하는 모든 행의 value_column 값을 합산하여 입력합니다.
+
+**Input**:
+- 본사 파일 조건 시트 및 조건 정보 (conditional_copy와 동일)
+  - `source_sheet`: 조건 확인 시트
+  - `name_column`: 이름 확인 열 (예: "G")
+  - `value_column`: 값 확인 열 (예: "F")
+  - `check_column`: 달성 여부 확인 열 (예: "J")
+  - `check_value`: 달성 여부 값 (예: "달성")
+- 지점 파일 셀 범위 (주차별 오프셋 적용)
+
+**Output**:
+- 각 라이더별로 조건을 만족하는 모든 행의 value_column 값이 합산되어 지점 파일에 입력
+
+**Behavior**:
+- 지점 파일의 라이더 목록(C열)을 기준으로 매칭
+- 본사 파일에서 해당 라이더의 조건 확인
+- 조건을 만족하는 모든 행의 value_column 값을 합산
+- 같은 라이더가 여러 행에 조건을 만족하는 경우 모두 합산
+- 숫자가 아닌 값(None, 문자열 등)은 합산에서 제외
+- 매칭되는 행이 없는 경우 0 입력
+- 지점 파일에만 주차별 오프셋 적용
+
+**Difference from conditional_copy**:
+- `conditional_copy`: 조건을 만족하는 첫 번째 행의 값만 가져옴
+- `conditional_sum`: 조건을 만족하는 모든 행의 값을 합산
+
+**Example**:
+```json
+{
+  "data_name": "지점 프로모션 합계",
+  "branch_sheet": "주간정산",
+  "branch_range": "H6:H35",
+  "head_office_sheet": "협력사 자체 미션",
+  "head_office_range": "",
+  "calculation_method": "conditional_sum",
+  "condition": {
+    "source_sheet": "협력사 자체 미션",
+    "name_column": "G",
+    "value_column": "F",
+    "check_column": "J",
+    "check_value": "달성"
+  }
+}
+```
+
 ## Error Handling
 
 ### 매핑 오류

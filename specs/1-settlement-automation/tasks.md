@@ -190,6 +190,17 @@
 
 ---
 
+## Phase 11: Conditional Sum Calculation Method
+
+**Purpose**: Add conditional_sum calculation method to sum value_column values for rows matching condition
+
+- [x] T069 Implement _execute_conditional_sum method in src/services/mapping_engine.py (sum value_column values for rows matching condition)
+- [x] T070 Add conditional_sum case handling in execute_mapping method in src/services/mapping_engine.py
+- [x] T071 [P] Add unit tests for _execute_conditional_sum in tests/unit/test_mapping_engine.py (test single match, multiple matches, non-matching condition, non-numeric values, week offset)
+- [x] T072 Update mapping engine contract documentation in specs/1-settlement-automation/contracts/mapping-engine.md (add conditional_sum method description)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
