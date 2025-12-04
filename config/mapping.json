@@ -20,7 +20,7 @@
     "branch_sheet": "주간정산",
     "branch_range": "E6:E35",
     "head_office_sheet": "종합",
-    "head_office_range": "G17:I46",
+    "head_office_range": "G17:I46, K17:K46, M17:M46, O17:O46, Q17:Q46, S17:S46, U17:U46, W17:W46, Y17:Y46",
     "calculation_method": "simple_sum"
   },
   {
@@ -28,8 +28,8 @@
     "branch_sheet": "주간정산",
     "branch_range": "F6:F35",
     "head_office_sheet": "종합",
-    "head_office_range": "K17:K46, M17:M46, O17:O46, Q17:Q46",
-    "calculation_method": "simple_sum"
+    "head_office_range": "AA17:AA46",
+    "calculation_method": "simple_copy"
   },
   {
     "data_name": "차감",
@@ -38,14 +38,6 @@
     "head_office_sheet": "종합",
     "head_office_range": "AB17:AB46",
     "calculation_method": "simple_copy"
-  },
-  {
-    "data_name": "본사 프로모션",
-    "branch_sheet": "주간정산",
-    "branch_range": "H6:H35",
-    "head_office_sheet": "종합",
-    "head_office_range": "S17:S46, U17:U46, W17:W46, Y17:Y46, AA17:AA46",
-    "calculation_method": "simple_sum"
   },
   {
     "data_name": "고용보험",
