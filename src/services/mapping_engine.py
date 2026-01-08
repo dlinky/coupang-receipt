@@ -102,6 +102,10 @@ class MappingEngine:
                 result = self._execute_conditional_sum(
                     mapping_config, head_workbook, branch_workbook, week_offset
                 )
+            elif mapping_config.calculation_method == "fee":
+                result = self._execute_fee(
+                    mapping_config, branch_workbook, week_offset
+                )
             else:
                 return MappingResult(
                     success=False,
@@ -568,42 +572,207 @@ class MappingEngine:
         mapping_config: MappingConfiguration,
         branch_workbook: Workbook
     ) -> MappingResult:
-        """Execute unique extraction for monthly settlement."""
+        """Execute unique extraction for monthly settlement.
+        
+        Extracts unique values from multiple columns across all weeks,
+        sorts by specified column and order, and writes all column values to target range.
+        """
         try:
+            # Get source range from mapping config (e.g., "C6:E35")
+            source_range_str = mapping_config.branch_range
+            start_col, start_row, end_col, end_row = CellUtils.parse_range(source_range_str)
+            
+            # Get sort column from config (default to D if not specified)
+            sort_col = mapping_config.sort_column or "D"
+            sort_order = (mapping_config.sort_order or "asc").lower()
+            
+            # Validate sort column is within source range
+            start_col_idx = column_index_from_string(start_col)
+            end_col_idx = column_index_from_string(end_col)
+            sort_col_idx = column_index_from_string(sort_col)
+            
+            if not (start_col_idx <= sort_col_idx <= end_col_idx):
+                return MappingResult(
+                    success=False,
+                    rows_processed=0,
+                    error_message=f"Sort column '{sort_col}' is not within source range '{source_range_str}'"
+                )
+            
             weekly_sheet = self.excel_processor.get_sheet(
                 branch_workbook, "주간정산"
             )
             
-            all_riders = set()
+            # Collect all rows from all weeks
+            all_rows = []
             
             for week in range(1, 6):
                 week_offset = self.config_manager.get_week_offset(week)
-                rider_range = CellUtils.apply_row_offset("C6:C35", week_offset)
-                riders = self.excel_processor.read_cell_range(weekly_sheet, rider_range)
-                all_riders.update([r for r in riders if r and str(r).strip()])
+                # Apply week offset to source range
+                source_range = CellUtils.apply_row_offset(source_range_str, week_offset)
+                start_col_offset, start_row_offset, end_col_offset, end_row_offset = CellUtils.parse_range(source_range)
+                
+                # Read each row as a tuple of all column values
+                for row in range(start_row_offset, end_row_offset + 1):
+                    row_values = []
+                    for col_idx in range(start_col_idx, end_col_idx + 1):
+                        cell = weekly_sheet.cell(row, col_idx)
+                        row_values.append(cell.value)
+                    
+                    # Skip empty rows (at least first column value should exist)
+                    if row_values[0] and str(row_values[0]).strip():
+                        all_rows.append(tuple(row_values))
             
-            unique_riders = sorted([r for r in all_riders if r])
+            # Extract unique rows using set
+            unique_rows = list(set(all_rows))
+            
+            # Get sort column index relative to start column
+            sort_col_relative_idx = sort_col_idx - start_col_idx
+            
+            # Sort by specified column
+            def sort_key(row):
+                sort_val = row[sort_col_relative_idx] if sort_col_relative_idx < len(row) else None
+                if sort_val is None:
+                    return (1, "")  # Put None values at the end
+                # Convert to string for consistent sorting
+                sort_str = str(sort_val).strip() if sort_val else ""
+                return (0, sort_str)
+            
+            unique_rows_sorted = sorted(unique_rows, key=sort_key, reverse=(sort_order == "desc"))
             
             monthly_sheet = self.excel_processor.get_sheet(
                 branch_workbook, mapping_config.branch_sheet
             )
             
+            # Parse target range
             target_range = mapping_config.branch_range
-            start_col, start_row, end_col, end_row = CellUtils.parse_range(target_range)
+            target_start_col, target_start_row, target_end_col, target_end_row = CellUtils.parse_range(target_range)
             
-            total_cells = end_row - start_row + 1
-            values = unique_riders[:total_cells]
-            if len(values) < total_cells:
-                values.extend([None] * (total_cells - len(values)))
+            # Calculate number of columns and rows from target range
+            target_start_col_idx = column_index_from_string(target_start_col)
+            target_end_col_idx = column_index_from_string(target_end_col)
+            num_cols = target_end_col_idx - target_start_col_idx + 1
+            num_rows = target_end_row - target_start_row + 1
+            
+            # Flatten sorted rows into a list for writing (row by row, column by column)
+            # Format: C6, D6, E6, C7, D7, E7, ..., C35, D35, E35
+            values = []
+            for i in range(num_rows):
+                if i < len(unique_rows_sorted):
+                    row_data = unique_rows_sorted[i]
+                    # Ensure row_data has enough columns
+                    for col_idx in range(num_cols):
+                        if col_idx < len(row_data):
+                            values.append(row_data[col_idx])
+                        else:
+                            values.append(None)
+                else:
+                    # Fill empty rows with None values
+                    values.extend([None] * num_cols)
             
             self.excel_processor.write_cell_range(monthly_sheet, target_range, values)
             
-            return MappingResult(success=True, rows_processed=len(unique_riders))
+            return MappingResult(success=True, rows_processed=len(unique_rows_sorted))
             
         except Exception as e:
             return MappingResult(
                 success=False,
                 rows_processed=0,
                 error_message=f"Unique extraction failed: {e}"
+            )
+    
+    def _execute_fee(
+        self,
+        mapping_config: MappingConfiguration,
+        branch_workbook: Workbook,
+        week_offset: int
+    ) -> MappingResult:
+        """Execute fee calculation operation.
+        
+        Writes fee formula (=F{row}*{fee_ratio}) only for checked riders.
+        """
+        try:
+            if mapping_config.fee_ratio is None:
+                return MappingResult(
+                    success=False,
+                    rows_processed=0,
+                    error_message="fee_ratio is required for fee calculation"
+                )
+            
+            branch_sheet = self.excel_processor.get_sheet(
+                branch_workbook, mapping_config.branch_sheet
+            )
+            
+            # Get fee riders from config
+            fee_riders = self.config_manager.get_fee_riders()
+            if not fee_riders:
+                return MappingResult(success=True, rows_processed=0)
+            
+            # Find "성함" mapping to get rider names from branch file
+            mappings = self.load_mappings()
+            name_mapping = None
+            for m in mappings:
+                if m.data_name == "성함":
+                    name_mapping = m
+                    break
+            
+            if not name_mapping:
+                return MappingResult(
+                    success=False,
+                    rows_processed=0,
+                    error_message="'성함' mapping not found"
+                )
+            
+            # Apply week offset to name range
+            name_range = CellUtils.apply_row_offset(name_mapping.branch_range, week_offset)
+            start_col, start_row, end_col, end_row = CellUtils.parse_range(name_range)
+            
+            # Read rider names from branch file
+            rider_names = self.excel_processor.read_cell_range(branch_sheet, name_range)
+            
+            # Parse target range and apply offset
+            target_range = CellUtils.apply_row_offset(
+                mapping_config.branch_range, week_offset
+            )
+            target_start_col, target_start_row, target_end_col, target_end_row = CellUtils.parse_range(target_range)
+            
+            # Get fee base column (F column for delivery fee)
+            # This could be made configurable later, but for now F is hardcoded
+            fee_base_col = "F"
+            
+            processed_count = 0
+            for i, rider_name in enumerate(rider_names):
+                if not rider_name or not str(rider_name).strip():
+                    continue
+                
+                rider_name_str = str(rider_name).strip()
+                
+                # Check if this rider has fee applied
+                if rider_name_str in fee_riders:
+                    # Calculate target row
+                    target_row = target_start_row + i
+                    
+                    # Create formula: =F{row}*{fee_ratio}
+                    fee_base_row = start_row + i  # F column row (same as name row)
+                    formula = f"={fee_base_col}{fee_base_row}*{mapping_config.fee_ratio}"
+                    
+                    # Write formula to cell
+                    cell_address = f"{target_start_col}{target_row}"
+                    
+                    # Handle merged cells
+                    merged_cell = self.excel_processor.get_merged_cell_top_left(branch_sheet, cell_address)
+                    if merged_cell:
+                        cell_address = merged_cell
+                    
+                    cell = branch_sheet[cell_address]
+                    cell.value = formula
+                    processed_count += 1
+            
+            return MappingResult(success=True, rows_processed=processed_count)
+            
+        except Exception as e:
+            return MappingResult(
+                success=False,
+                rows_processed=0,
+                error_message=f"Fee calculation failed: {e}"
             )
 

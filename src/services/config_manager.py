@@ -115,6 +115,17 @@ class ConfigManager:
         week_offsets = config.get("week_offsets", {})
         return week_offsets.get(str(week), 0)
     
+    def get_fee_riders(self) -> List[str]:
+        """Get list of riders who have fee applied."""
+        config = self.load_config()
+        return config.get("fee_riders", [])
+    
+    def save_fee_riders(self, riders: List[str]) -> None:
+        """Save list of riders who have fee applied."""
+        config = self.load_config()
+        config["fee_riders"] = riders
+        self.save_config(config)
+    
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {

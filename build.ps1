@@ -1,5 +1,10 @@
 # PowerShell 배포용 실행 파일 빌드 스크립트
 
+# 한글 출력을 위한 인코딩 설정
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001 | Out-Null
+
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host "본사 정산서 자동화 프로그램 빌드" -ForegroundColor Cyan
 Write-Host "====================================" -ForegroundColor Cyan
@@ -47,7 +52,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "실행 파일 위치: dist\쿠팡 정산서 프로그램(v1.0).exe" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "배포 시 다음 파일들을 함께 배포하세요:" -ForegroundColor Yellow
-    Write-Host "- dist\쿠팡 정산서 프로그램(v1.0).exe" -ForegroundColor Yellow
+    Write-Host "- dist\쿠팡 정산서 프로그램(v0.1).exe" -ForegroundColor Yellow
     Write-Host "- config 폴더 (config.json, mapping.json 포함)" -ForegroundColor Yellow
     Write-Host ""
 } else {

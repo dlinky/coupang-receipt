@@ -6,7 +6,8 @@ from typing import Optional
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QComboBox, QProgressBar,
-    QTextEdit, QFileDialog, QMessageBox
+    QTextEdit, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem,
+    QHeaderView, QCheckBox
 )
 from PySide6.QtCore import Qt, QThread, Signal
 
@@ -144,13 +145,19 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         """Initialize UI components."""
         self.setWindowTitle("본사 정산서 자동화 프로그램")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1200, 700)
         
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        layout = QVBoxLayout()
-        central_widget.setLayout(layout)
+        # Main horizontal layout (left: controls, right: fee table)
+        main_layout = QHBoxLayout()
+        central_widget.setLayout(main_layout)
+        
+        # Left side: controls
+        left_widget = QWidget()
+        left_layout = QVBoxLayout()
+        left_widget.setLayout(left_layout)
         
         # Head office file selection
         head_office_layout = QHBoxLayout()
@@ -162,7 +169,7 @@ class MainWindow(QMainWindow):
         head_office_layout.addWidget(head_office_label)
         head_office_layout.addWidget(self.head_office_path_label, 1)
         head_office_layout.addWidget(head_office_btn)
-        layout.addLayout(head_office_layout)
+        left_layout.addLayout(head_office_layout)
         
         # Password input
         password_layout = QHBoxLayout()
@@ -172,7 +179,7 @@ class MainWindow(QMainWindow):
         self.password_input.setText(self.config_manager.get_default_password())
         password_layout.addWidget(password_label)
         password_layout.addWidget(self.password_input, 1)
-        layout.addLayout(password_layout)
+        left_layout.addLayout(password_layout)
         
         # Branch file selection
         branch_layout = QHBoxLayout()
@@ -184,7 +191,7 @@ class MainWindow(QMainWindow):
         branch_layout.addWidget(branch_label)
         branch_layout.addWidget(self.branch_path_label, 1)
         branch_layout.addWidget(branch_btn)
-        layout.addLayout(branch_layout)
+        left_layout.addLayout(branch_layout)
         
         # Week selection
         week_layout = QHBoxLayout()
@@ -193,29 +200,50 @@ class MainWindow(QMainWindow):
         self.week_combo.addItems(["1주차", "2주차", "3주차", "4주차", "5주차", "전체"])
         week_layout.addWidget(week_label)
         week_layout.addWidget(self.week_combo, 1)
-        layout.addLayout(week_layout)
+        left_layout.addLayout(week_layout)
         
         # Execute button
         execute_btn = QPushButton("작업 시작")
         execute_btn.clicked.connect(self.execute_mapping)
-        layout.addWidget(execute_btn)
+        left_layout.addWidget(execute_btn)
         
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
+        left_layout.addWidget(self.progress_bar)
         
         # Log output
         log_label = QLabel("진행 상황:")
-        layout.addWidget(log_label)
+        left_layout.addWidget(log_label)
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
-        layout.addWidget(self.log_output, 1)
+        left_layout.addWidget(self.log_output, 1)
         
         # Mapping editor button
         editor_btn = QPushButton("매핑 설정 수정")
         editor_btn.clicked.connect(self.open_mapping_editor)
-        layout.addWidget(editor_btn)
+        left_layout.addWidget(editor_btn)
+        
+        # Right side: Fee table
+        right_widget = QWidget()
+        right_layout = QVBoxLayout()
+        right_widget.setLayout(right_layout)
+        
+        fee_label = QLabel("수수료 적용")
+        right_layout.addWidget(fee_label)
+        
+        # Create table with 2 columns: 성함, 수수료 적용
+        self.fee_table = QTableWidget()
+        self.fee_table.setColumnCount(2)
+        self.fee_table.setHorizontalHeaderLabels(["성함", "수수료 적용"])
+        self.fee_table.horizontalHeader().setStretchLastSection(True)
+        self.fee_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.fee_table.verticalHeader().setVisible(False)
+        right_layout.addWidget(self.fee_table)
+        
+        # Add widgets to main layout
+        main_layout.addWidget(left_widget, 2)
+        main_layout.addWidget(right_widget, 1)
     
     def select_head_office_file(self):
         """Select head office file."""
@@ -242,6 +270,9 @@ class MainWindow(QMainWindow):
                 self.head_office_path_label.setText(Path(file_path).name)
                 self.log_output.append(f"본사 파일 로드: {Path(file_path).name}")
                 self.logger.info(f"Head office file loaded: {file_path}")
+                
+                # Load rider names from head office file
+                self.load_rider_names()
             except ValueError as e:
                 QMessageBox.critical(
                     self,
@@ -346,6 +377,80 @@ class MainWindow(QMainWindow):
             
             self.log_output.append(f"오류: {message}")
             self.logger.error(f"Mapping failed: {message}")
+    
+    def load_rider_names(self):
+        """Load rider names from head office file and populate fee table."""
+        if not self.head_office_file:
+            return
+        
+        try:
+            from ..services.excel_processor import ExcelProcessor
+            
+            excel_processor = ExcelProcessor()
+            head_workbook = excel_processor.load_workbook(
+                self.head_office_file.file_path,
+                self.head_office_file.password
+            )
+            
+            # Find mapping for "성함" (rider names)
+            mappings = self.mapping_engine.load_mappings()
+            name_mapping = None
+            for mapping in mappings:
+                if mapping.data_name == "성함":
+                    name_mapping = mapping
+                    break
+            
+            if not name_mapping:
+                self.log_output.append("경고: '성함' 매핑 설정을 찾을 수 없습니다.")
+                return
+            
+            head_sheet = excel_processor.get_sheet(head_workbook, name_mapping.head_office_sheet)
+            rider_names = excel_processor.read_cell_range(head_sheet, name_mapping.head_office_range)
+            
+            # Load saved fee riders
+            saved_fee_riders = self.config_manager.get_fee_riders()
+            
+            # Populate table
+            self.fee_table.setRowCount(len(rider_names))
+            for i, name in enumerate(rider_names):
+                if name and str(name).strip():
+                    # Name column
+                    name_item = QTableWidgetItem(str(name).strip())
+                    name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+                    self.fee_table.setItem(i, 0, name_item)
+                    
+                    # Checkbox column
+                    checkbox = QCheckBox()
+                    checkbox.setChecked(str(name).strip() in saved_fee_riders)
+                    checkbox.stateChanged.connect(self.on_fee_checkbox_changed)
+                    self.fee_table.setCellWidget(i, 1, checkbox)
+            
+            self.log_output.append(f"배달기사 목록 로드 완료: {len([n for n in rider_names if n])}명")
+            
+        except Exception as e:
+            self.log_output.append(f"배달기사 목록 로드 실패: {e}")
+            self.logger.error(f"Failed to load rider names: {e}")
+    
+    def on_fee_checkbox_changed(self):
+        """Handle fee checkbox state change and save to config."""
+        fee_riders = []
+        for i in range(self.fee_table.rowCount()):
+            name_item = self.fee_table.item(i, 0)
+            checkbox = self.fee_table.cellWidget(i, 1)
+            if name_item and checkbox and checkbox.isChecked():
+                fee_riders.append(name_item.text())
+        
+        self.config_manager.save_fee_riders(fee_riders)
+    
+    def get_fee_riders(self) -> list:
+        """Get list of riders who have fee applied."""
+        fee_riders = []
+        for i in range(self.fee_table.rowCount()):
+            name_item = self.fee_table.item(i, 0)
+            checkbox = self.fee_table.cellWidget(i, 1)
+            if name_item and checkbox and checkbox.isChecked():
+                fee_riders.append(name_item.text())
+        return fee_riders
     
     def open_mapping_editor(self):
         """Open mapping editor window."""

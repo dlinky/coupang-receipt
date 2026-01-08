@@ -26,6 +26,9 @@ class MappingConfiguration:
     condition: Optional[Condition] = None
     date_format: Optional[str] = None
     date_type: Optional[str] = None
+    sort_column: Optional[str] = None
+    sort_order: Optional[str] = None
+    fee_ratio: Optional[float] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MappingConfiguration":
@@ -44,6 +47,9 @@ class MappingConfiguration:
             condition=condition,
             date_format=data.get("date_format"),
             date_type=data.get("date_type"),
+            sort_column=data.get("sort_column"),
+            sort_order=data.get("sort_order"),
+            fee_ratio=data.get("fee_ratio"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,6 +77,15 @@ class MappingConfiguration:
         
         if self.date_type:
             result["date_type"] = self.date_type
+        
+        if self.sort_column:
+            result["sort_column"] = self.sort_column
+        
+        if self.sort_order:
+            result["sort_order"] = self.sort_order
+        
+        if self.fee_ratio is not None:
+            result["fee_ratio"] = self.fee_ratio
         
         return result
 
