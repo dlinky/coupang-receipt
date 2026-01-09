@@ -23,8 +23,8 @@ class ProcessingContext:
         if not self.selected_weeks:
             raise ValueError("Selected weeks cannot be empty")
         for week in self.selected_weeks:
-            if not (1 <= week <= 5):
-                raise ValueError(f"Week must be between 1 and 5, got {week}")
+            if not (1 <= week <= 8):
+                raise ValueError(f"Week must be between 1 and 8, got {week}")
         if self.status == "error" and not self.error_message:
             raise ValueError("Error message is required when status is 'error'")
 

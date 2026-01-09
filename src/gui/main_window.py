@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         week_layout = QHBoxLayout()
         week_label = QLabel("주차 선택:")
         self.week_combo = QComboBox()
-        self.week_combo.addItems(["1주차", "2주차", "3주차", "4주차", "5주차", "전체"])
+        self.week_combo.addItems(["1주차", "2주차", "3주차", "4주차", "5주차", "6주차", "7주차", "8주차"])
         week_layout.addWidget(week_label)
         week_layout.addWidget(self.week_combo, 1)
         left_layout.addLayout(week_layout)
@@ -265,14 +265,45 @@ class MainWindow(QMainWindow):
                     return
                 
                 self.head_office_file = FileParser.parse_filename(file_path)
-                self.head_office_file.password = self.password_input.text() or None
-                self.head_office_file.is_protected = bool(self.password_input.text())
-                self.head_office_path_label.setText(Path(file_path).name)
-                self.log_output.append(f"본사 파일 로드: {Path(file_path).name}")
-                self.logger.info(f"Head office file loaded: {file_path}")
+                password = self.password_input.text() or None
+                self.head_office_file.password = password
+                self.head_office_file.is_protected = bool(password)
                 
-                # Load rider names from head office file
-                self.load_rider_names()
+                # Try to load the file to verify password
+                from ..services.excel_processor import ExcelProcessor
+                excel_processor = ExcelProcessor()
+                try:
+                    # Test if file can be opened with the password
+                    test_workbook = excel_processor.load_workbook(
+                        self.head_office_file.file_path,
+                        password
+                    )
+                    test_workbook.close()  # Close the test workbook
+                    
+                    # If successful, save password to config
+                    if password:
+                        config = self.config_manager.load_config()
+                        config["default_password"] = password
+                        self.config_manager.save_config(config)
+                        self.logger.info(f"Password saved to config: {password[:3]}***")
+                    
+                    self.head_office_path_label.setText(Path(file_path).name)
+                    self.log_output.append(f"본사 파일 로드: {Path(file_path).name}")
+                    self.logger.info(f"Head office file loaded: {file_path}")
+                    
+                    # Load rider names from head office file
+                    self.load_rider_names()
+                except ValueError as e:
+                    # Password error
+                    if "password" in str(e).lower() or "Invalid password" in str(e):
+                        QMessageBox.critical(
+                            self,
+                            "비밀번호 오류",
+                            f"파일을 열 수 없습니다.\n\n비밀번호가 올바르지 않습니다.\n\n오류: {e}"
+                        )
+                        self.logger.error(f"Invalid password for file: {file_path}")
+                    else:
+                        raise
             except ValueError as e:
                 QMessageBox.critical(
                     self,
@@ -318,7 +349,7 @@ class MainWindow(QMainWindow):
         
         week_text = self.week_combo.currentText()
         if week_text == "전체":
-            selected_weeks = [1, 2, 3, 4, 5]
+            selected_weeks = [1, 2, 3, 4, 5, 6, 7, 8]
         else:
             selected_weeks = [int(week_text[0])]
         

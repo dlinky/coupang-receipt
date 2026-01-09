@@ -1,17 +1,16 @@
 {
-  "default_password": "4880403942",
+  "default_password": "123123",
   "week_offsets": {
     "1": 0,
     "2": 36,
     "3": 72,
     "4": 108,
-    "5": 144
+    "5": 144,
+    "6": 180,
+    "7": 216,
+    "8": 252
   },
   "mapping_file_path": "config/mapping.json",
   "config_file_path": "config/config.json",
-  "fee_riders": [
-    "윤동식7044",
-    "김민관6697",
-    "신혜영9120"
-  ]
+  "fee_riders": []
 }

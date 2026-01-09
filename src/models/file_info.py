@@ -20,8 +20,8 @@ class FileInformation:
             raise ValueError(f"Year must be between 2000 and 2100, got {self.year}")
         if not (1 <= self.month <= 12):
             raise ValueError(f"Month must be between 1 and 12, got {self.month}")
-        if not (1 <= self.week <= 5):
-            raise ValueError(f"Week must be between 1 and 5, got {self.week}")
+        if not (1 <= self.week <= 8):
+            raise ValueError(f"Week must be between 1 and 8, got {self.week}")
         if self.is_protected and not self.password:
             raise ValueError("Password is required for protected files")
 

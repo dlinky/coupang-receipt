@@ -135,7 +135,10 @@ class ConfigManager:
                 "2": 36,
                 "3": 72,
                 "4": 108,
-                "5": 144
+                "5": 144,
+                "6": 180,
+                "7": 216,
+                "8": 252
             },
             "mapping_file_path": "config/mapping.json",
             "config_file_path": "config/config.json"

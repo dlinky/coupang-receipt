@@ -53,17 +53,17 @@ class MappingEngine:
             mapping_config: Mapping configuration
             head_office_file: Head office file information
             branch_file_path: Branch file path
-            week: Week number (1-5)
+            week: Week number (1-8)
             branch_workbook: Optional workbook object (if provided, will be reused)
         
         Returns:
             MappingResult with success status and details
         """
-        if not (1 <= week <= 5):
+        if not (1 <= week <= 8):
             return MappingResult(
                 success=False,
                 rows_processed=0,
-                error_message=f"Week must be between 1 and 5, got {week}"
+                error_message=f"Week must be between 1 and 8, got {week}"
             )
         
         try:
@@ -75,8 +75,8 @@ class MappingEngine:
             if branch_workbook is None:
                 branch_workbook = self.excel_processor.load_workbook(branch_file_path, data_only=False)
             
-            file_week = head_office_file.week
-            week_offset = self.config_manager.get_week_offset(file_week)
+            # Use the manually selected week for offset calculation, not the file's original week
+            week_offset = self.config_manager.get_week_offset(week)
             
             if mapping_config.calculation_method == "simple_copy":
                 result = self._execute_simple_copy(
@@ -88,7 +88,7 @@ class MappingEngine:
                 )
             elif mapping_config.calculation_method == "date_calculation":
                 result = self._execute_date_calculation(
-                    mapping_config, branch_workbook, head_office_file, file_week, week_offset
+                    mapping_config, branch_workbook, head_office_file, week, week_offset
                 )
             elif mapping_config.calculation_method == "unique_extraction":
                 result = self._execute_unique_extraction(
@@ -159,7 +159,7 @@ class MappingEngine:
             branch_workbook: Workbook to save
             branch_file_path: Original branch file path
             head_office_file: Head office file information
-            week: Week number (1-5)
+            week: Week number (1-8)
         
         Returns:
             New file path where file was saved
@@ -605,7 +605,7 @@ class MappingEngine:
             # Collect all rows from all weeks
             all_rows = []
             
-            for week in range(1, 6):
+            for week in range(1, 9):
                 week_offset = self.config_manager.get_week_offset(week)
                 # Apply week offset to source range
                 source_range = CellUtils.apply_row_offset(source_range_str, week_offset)
