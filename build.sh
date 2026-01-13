@@ -32,10 +32,10 @@ if [ $? -eq 0 ]; then
     echo "===================================="
     echo "빌드 완료!"
     echo "===================================="
-    echo "실행 파일 위치: dist/쿠팡 정산서 프로그램(v1.0)"
+    echo "실행 파일 위치: dist/쿠팡 정산서 프로그램(v1.1)"
     echo ""
     echo "배포 시 다음 파일들을 함께 배포하세요:"
-    echo "- dist/쿠팡 정산서 프로그램(v1.0)"
+    echo "- dist/쿠팡 정산서 프로그램(v1.1)"
     echo "- config 폴더 (config.json, mapping.json 포함)"
     echo ""
 else

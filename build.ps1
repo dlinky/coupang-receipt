@@ -49,10 +49,10 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "====================================" -ForegroundColor Green
     Write-Host "빌드 완료!" -ForegroundColor Green
     Write-Host "====================================" -ForegroundColor Green
-    Write-Host "실행 파일 위치: dist\쿠팡 정산서 프로그램(v1.0).exe" -ForegroundColor Cyan
+    Write-Host "실행 파일 위치: dist\쿠팡 정산서 프로그램(v1.1).exe" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "배포 시 다음 파일들을 함께 배포하세요:" -ForegroundColor Yellow
-    Write-Host "- dist\쿠팡 정산서 프로그램(v0.1).exe" -ForegroundColor Yellow
+    Write-Host "- dist\쿠팡 정산서 프로그램(v1.1).exe" -ForegroundColor Yellow
     Write-Host "- config 폴더 (config.json, mapping.json 포함)" -ForegroundColor Yellow
     Write-Host ""
 } else {

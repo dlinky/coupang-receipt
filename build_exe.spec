@@ -36,7 +36,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='쿠팡 정산서 프로그램(v1.0)',
+    name='쿠팡 정산서 프로그램(v1.1)',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

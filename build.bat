@@ -33,10 +33,10 @@ if %ERRORLEVEL% EQU 0 (
     echo ====================================
     echo 빌드 완료!
     echo ====================================
-    echo 실행 파일 위치: dist\쿠팡 정산서 프로그램(v1.0).exe
+    echo 실행 파일 위치: dist\쿠팡 정산서 프로그램(v1.1).exe
     echo.
     echo 배포 시 다음 파일들을 함께 배포하세요:
-    echo - dist\쿠팡 정산서 프로그램(v1.0).exe
+    echo - dist\쿠팡 정산서 프로그램(v1.1).exe
     echo - config 폴더 (config.json, mapping.json 포함)
     echo.
 ) else (
